@@ -1,0 +1,12 @@
+[client]
+socket="/mysqldata/mysql3306/mysql.sock"
+
+[mysql]
+default-character-set="utf8mb4"
+
+[mysqld_multi]
+mysqld=/usr/local/mysql/bin/mysqld_safe
+
+[mysqld]
+port="3306"
+log_timestamps="SYSTEM"
