@@ -1,22 +1,48 @@
 package main
 
 import (
+	// "github.com/bluepongo/mysql_autoInstall/installer"
+	"fmt"
+	"github.com/bluepongo/mysql_autoInstall/conf"
+	"github.com/bluepongo/mysql_autoInstall/install"
 	"github.com/gin-gonic/gin"
+	"github.com/romberli/log"
+	"strings"
+)
+
+const (
+	LogFilePath = "/tmp/test.log"
+	// Need to change
 )
 
 func main() {
-	r := gin.Default()
+	router := gin.Default()
 
-	allUsers := []user{{ID: 123, Name: "张三", Age: 20}, {ID: 456, Name: "李四", Age: 25}}
-	r.GET("/users", func(c *gin.Context) {
-		c.IndentedJSON(200, allUsers)
+	router.POST("/post", func(c *gin.Context) {
+
+		IpPorts := c.QueryArray("ip")
+		// Initialize a logger
+		fileName := LogFilePath
+		_, _, err := log.InitLoggerWithDefaultConfig(fileName)
+		if err != nil {
+			panic(err)
+		}
+		log.Info("Initial log file success.")
+		for _, IpPort := range IpPorts {
+			ip := strings.Split(IpPort, ":")[0]
+			port := strings.Split(IpPort, ":")[1]
+			fmt.Printf("Current:Ip:%s, Port:%s\n", ip, port)
+			log.Infof("Current:Ip:%s, Port:%d", ip, port)
+			fmt.Println("=========Prepare to generate mycnf=========")
+			err = conf.GenerateMyCnf(ip, port)
+			if err != nil {
+				log.Warnf("%v", err)
+				return
+			}
+			fmt.Println("=========Prepare to create ssh connection=========")
+			install.InstallMysqlSSH(ip, port)
+			fmt.Println("=========Finish=========")
+		}
 	})
-
-	r.Run(":8080")
-}
-
-type user struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+	router.Run(":8080")
 }
